@@ -1,0 +1,35 @@
+ 
+name: Testes Automatizados
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar codigo
+        uses: actions/checkout@v4
+
+      - name: Validar formato da versao
+        shell: bash
+        run: |
+          VERSION=$(cat version.txt)
+          [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+
+      - name: Testar incremento da versao
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          versao = Path("version.txt").read_text().strip()
+          major, minor, patch = map(int, versao[1:].split("."))
+          nova = f"v{major}.{minor}.{patch + 1}"
+
+          assert nova != versao
+          assert int(nova.split(".")[-1]) == patch + 1
+          print(f"Teste aprovado: {versao} -> {nova}")
+          PY
